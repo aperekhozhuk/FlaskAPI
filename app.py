@@ -17,7 +17,7 @@ ma = Marshmallow(app)
 # Article Model
 class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), unique=True)
+    title = db.Column(db.String(100))
     text = db.Column(db.String(1200))
 
     def __init__(self, title, text):
@@ -33,6 +33,50 @@ class ArticleSchema(ma.Schema):
 article_schema = ArticleSchema()
 articles_schema = ArticleSchema(many=True)
 
+# ROUTES
 
+# Create a new Article
+@app.route('/articles/new', methods=['POST'])
+def add_article():
+    title= request.json['title']
+    text = request.json['text']
+    new_article = Article(title, text)
+    db.session.add(new_article)
+    db.session.commit()
+    return article_schema.jsonify(new_article)
+
+# Get All Articles
+@app.route('/articles', methods=['GET'])
+def get_articles():
+    all_articles = Article.query.all()
+    result = articles_schema.dump(all_articles)
+    return jsonify(result)
+
+# Get Single Article
+@app.route('/articles/<id>', methods=['GET'])
+def get_article(id):
+    article = Article.query.get(id)
+    return article_schema.jsonify(article)
+
+# Update a Article
+@app.route('/articles/edit/<id>', methods=['PUT'])
+def update_article(id):
+    article = Article.query.get(id)
+    title = request.json['title']
+    text = request.json['text']
+    article.title = title
+    article.text = text
+    db.session.commit()
+    return article_schema.jsonify(article)
+
+# Delete Article
+@app.route('/articles/delete/<id>', methods=['DELETE'])
+def delete_article(id):
+    article = Article.query.get(id)
+    db.session.delete(article)
+    db.session.commit()
+    return article_schema.jsonify(article)
+
+# Running app
 if __name__ == '__main__':
     app.run(debug=True)
