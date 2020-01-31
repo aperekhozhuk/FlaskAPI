@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 import os
+import jwt
 
 ####### App Settings
 
@@ -58,6 +59,19 @@ user_schema = UserSchema()
 
 #################   ROUTES
 
+def login_required(func):
+    def wrapper(*args, **kwargs):
+        token = request.json['token']
+        if not token:
+            return jsonify({'message': 'Token is missing'})
+        try:
+            jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        except:
+            return jsonify({'message': 'Invalid token'})
+        return func(*args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
+
 # Create a new User
 @app.route('/register', methods=['POST'])
 def register():
@@ -74,10 +88,14 @@ def login():
     username = request.json['username']
     password = request.json['password']
     user = User.query.filter_by(username=username, password=password).first()
-    return  user_schema.jsonify(user)
+    if user:
+        token = jwt.encode({'username': username, 'password': password}, app.config['SECRET_KEY'])
+        return jsonify({'user_id': user.id, 'username': user.username, 'token': token.decode('UTF-8')})
+    return  jsonify({'user_id': 'None'})
 
 # Create a new Article
 @app.route('/articles/new', methods=['POST'])
+@login_required
 def add_article():
     title= request.json['title']
     text = request.json['text']
@@ -101,6 +119,7 @@ def get_article(id):
 
 # Update a Article
 @app.route('/articles/edit/<id>', methods=['PUT'])
+@login_required
 def update_article(id):
     article = Article.query.get(id)
     title = request.json['title']
@@ -112,6 +131,7 @@ def update_article(id):
 
 # Delete Article
 @app.route('/articles/delete/<id>', methods=['DELETE'])
+@login_required
 def delete_article(id):
     article = Article.query.get(id)
     db.session.delete(article)
