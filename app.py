@@ -5,8 +5,8 @@ from flask_cors import CORS
 import os
 import jwt
 
-####### App Settings
 
+####### App Settings
 # Init app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'A16RoTodXyMxiGgbvkuk'
@@ -20,8 +20,8 @@ db = SQLAlchemy(app)
 # Init ma
 ma = Marshmallow(app)
 
-#### Models and Schemas
 
+#### Models and Schemas
 # User model
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,17 +57,19 @@ article_schema = ArticleSchema()
 articles_schema = ArticleSchema(many=True)
 user_schema = UserSchema()
 
+
 #################   ROUTES
 
+# authorization decorator
 def login_required(func):
     def wrapper(*args, **kwargs):
         token = request.json['token']
         if not token:
-            return jsonify({'message': 'Token is missing'})
+            return jsonify({'errors': 'Token is missing'})
         try:
             jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
         except:
-            return jsonify({'message': 'Invalid token'})
+            return jsonify({'errors': 'Invalid token'})
         return func(*args, **kwargs)
     wrapper.__name__ = func.__name__
     return wrapper
@@ -75,30 +77,46 @@ def login_required(func):
 # Create a new User
 @app.route('/register', methods=['POST'])
 def register():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+    if not username:
+        return jsonify({'errors': 'username is missing'})
+    if not password:
+        return jsonify({'errors': 'password is missing'})
     new_user = User(username, password)
-    db.session.add(new_user)
-    db.session.commit()
-    return user_schema.jsonify(new_user)
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return user_schema.jsonify(new_user)
+    except Exception:
+        db.session().rollback()
+        return jsonify({'errors': 'User with such username already exists'})
 
 # User login
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.json['username']
-    password = request.json['password']
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+    if not username:
+        return jsonify({'errors': 'username is missing'})
+    if not password:
+        return jsonify({'errors': 'password is missing'})
     user = User.query.filter_by(username=username, password=password).first()
     if user:
         token = jwt.encode({'username': username, 'password': password}, app.config['SECRET_KEY'])
-        return jsonify({'user_id': user.id, 'username': user.username, 'token': token.decode('UTF-8')})
-    return  jsonify({'user_id': 'None'})
+        return jsonify({'errors': '', 'user_id': user.id, 'username': user.username, 'token': token.decode('UTF-8')})
+    return  jsonify({'errors': 'Uncorrect username or password'})
 
 # Create a new Article
 @app.route('/articles/new', methods=['POST'])
 @login_required
 def add_article():
-    title= request.json['title']
-    text = request.json['text']
+    title = request.json.get('title', None)
+    text = request.json.get('text', None)
+    if not title:
+        return jsonify({'errors': 'title is missing'})
+    if not text:
+        return jsonify({'errors': 'text is missing'})
     new_article = Article(title, text)
     db.session.add(new_article)
     db.session.commit()
@@ -107,6 +125,7 @@ def add_article():
 # Get All Articles
 @app.route('/articles', methods=['GET'])
 def get_articles():
+    # Not good idea to load all articles. In future need to make pagination
     all_articles = Article.query.all()
     result = articles_schema.dump(all_articles)
     return jsonify(result)
@@ -115,15 +134,23 @@ def get_articles():
 @app.route('/articles/<id>', methods=['GET'])
 def get_article(id):
     article = Article.query.get(id)
-    return article_schema.jsonify(article)
+    if article:
+        return article_schema.jsonify(article)
+    return jsonify({'errors': 'Article with id={} not found'.format(id)})
 
 # Update a Article
 @app.route('/articles/edit/<id>', methods=['PUT'])
 @login_required
 def update_article(id):
     article = Article.query.get(id)
-    title = request.json['title']
-    text = request.json['text']
+    if not article:
+        return jsonify({'errors': 'Article with id={} not found'.format(id)})
+    title = request.json.get('title', None)
+    text = request.json.get('text', None)
+    if not title:
+        return jsonify({'errors': 'title is missing'})
+    if not text:
+        return jsonify({'errors': 'text is missing'})
     article.title = title
     article.text = text
     db.session.commit()
@@ -134,6 +161,8 @@ def update_article(id):
 @login_required
 def delete_article(id):
     article = Article.query.get(id)
+    if not article:
+        return jsonify({'errors': 'Article with id={} not found'.format(id)})
     db.session.delete(article)
     db.session.commit()
     return article_schema.jsonify(article)
