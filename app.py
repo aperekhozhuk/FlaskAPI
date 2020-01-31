@@ -63,7 +63,7 @@ user_schema = UserSchema()
 # authorization decorator
 def login_required(func):
     def wrapper(*args, **kwargs):
-        token = request.json['token']
+        token = request.json.get('token', None)
         if not token:
             return jsonify({'errors': 'Token is missing'})
         try:
