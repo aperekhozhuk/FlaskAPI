@@ -4,8 +4,11 @@ from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 import os
 
+####### App Settings
+
 # Init app
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'A16RoTodXyMxiGgbvkuk'
 CORS(app)
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Database
@@ -15,6 +18,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 # Init ma
 ma = Marshmallow(app)
+
+#### Models and Schemas
+
+# User model
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True)
+    password = db.Column(db.String(40))
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
 
 # Article Model
 class Article(db.Model):
@@ -26,6 +41,11 @@ class Article(db.Model):
         self.title = title
         self.text = text
 
+# User_schema
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'username')
+
 # Article Schema
 class ArticleSchema(ma.Schema):
   class Meta:
@@ -34,8 +54,27 @@ class ArticleSchema(ma.Schema):
 # Init schema
 article_schema = ArticleSchema()
 articles_schema = ArticleSchema(many=True)
+user_schema = UserSchema()
 
-# ROUTES
+#################   ROUTES
+
+# Create a new User
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json['username']
+    password = request.json['password']
+    new_user = User(username, password)
+    db.session.add(new_user)
+    db.session.commit()
+    return user_schema.jsonify(new_user)
+
+# User login
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json['username']
+    password = request.json['password']
+    user = User.query.filter_by(username=username, password=password).first()
+    return  user_schema.jsonify(user)
 
 # Create a new Article
 @app.route('/articles/new', methods=['POST'])
