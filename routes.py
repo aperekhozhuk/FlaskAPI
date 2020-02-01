@@ -78,7 +78,7 @@ def add_article(user):
         return jsonify({'errors': 'title is missing'})
     if not text:
         return jsonify({'errors': 'text is missing'})
-    new_article = Article(title, text)
+    new_article = Article(user.id, title, text)
     db.session.add(new_article)
     db.session.commit()
     return article_schema.jsonify(new_article)
@@ -106,6 +106,8 @@ def update_article(user, id):
     article = Article.query.get(id)
     if not article:
         return jsonify({'errors': 'Article with id={} not found'.format(id)})
+    if article.user_id != user.id:
+        return jsonify({'errors': 'You can edit only own post'})
     title = request.json.get('title', None)
     text = request.json.get('text', None)
     if not title:
@@ -124,6 +126,8 @@ def delete_article(user, id):
     article = Article.query.get(id)
     if not article:
         return jsonify({'errors': 'Article with id={} not found'.format(id)})
+    if article.user_id != user.id:
+        return jsonify({'errors': 'You can delete only own post'})
     db.session.delete(article)
     db.session.commit()
     return article_schema.jsonify(article)
