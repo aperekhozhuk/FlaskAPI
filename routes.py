@@ -11,10 +11,22 @@ def login_required(func):
         if not token:
             return jsonify({'errors': 'Token is missing'})
         try:
-            jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            # If decoding was success - it's no guarantee,
+            # that such user really registered
+            # Need to check
+            user = User.query.filter_by(
+                username = payload['username'],
+                password = payload['password']
+            ).first()
+            # If user was not found - raise Exception.
+            # It breaks us to next exception handler
+            if not user:
+                raise Exception
         except:
             return jsonify({'errors': 'Invalid token'})
-        return func(*args, **kwargs)
+        # Now, we can call our route function and pass valid user to it
+        return func(user, *args, **kwargs)
     wrapper.__name__ = func.__name__
     return wrapper
 
@@ -59,7 +71,7 @@ def login():
 # Create a new Article
 @app.route('/articles/new', methods=['POST'])
 @login_required
-def add_article():
+def add_article(user):
     title = request.json.get('title', None)
     text = request.json.get('text', None)
     if not title:
@@ -90,7 +102,7 @@ def get_article(id):
 # Update a Article
 @app.route('/articles/edit/<id>', methods=['PUT'])
 @login_required
-def update_article(id):
+def update_article(user, id):
     article = Article.query.get(id)
     if not article:
         return jsonify({'errors': 'Article with id={} not found'.format(id)})
@@ -108,7 +120,7 @@ def update_article(id):
 # Delete Article
 @app.route('/articles/delete/<id>', methods=['DELETE'])
 @login_required
-def delete_article(id):
+def delete_article(user, id):
     article = Article.query.get(id)
     if not article:
         return jsonify({'errors': 'Article with id={} not found'.format(id)})

@@ -1,5 +1,8 @@
 from app import db
 import os
 
-os.remove('db.sqlite')
+try:
+    os.remove('db.sqlite')
+except:
+    pass
 db.create_all()
