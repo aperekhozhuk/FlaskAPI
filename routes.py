@@ -131,3 +131,10 @@ def delete_article(user, id):
     db.session.delete(article)
     db.session.commit()
     return article_schema.jsonify(article)
+
+@app.route('/users/<id>', methods=['GET'])
+def user_data(id):
+    user = User.query.get(id)
+    if not user:
+        return jsonify({'errors': 'User with id={} not found'.format(id)})
+    return user_schema.jsonify(user)

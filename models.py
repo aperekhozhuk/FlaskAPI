@@ -14,6 +14,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True)
     password = db.Column(db.String(40))
+    date_registered = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     articles = db.relationship('Article', backref='author', lazy='dynamic')
 
@@ -42,7 +43,7 @@ class Article(db.Model):
 # User_schema
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'username')
+        fields = ('id', 'username', 'date_registered')
 
 # Article Schema
 class ArticleSchema(ma.Schema):
