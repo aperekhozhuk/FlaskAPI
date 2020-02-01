@@ -98,6 +98,20 @@ Body:
 ```
 If specified post was not found - same as 2)
 ### 6. POST '/register'  - register new user
+#### Constraints:
+```
+Username:
+  5 <= length <= 20
+  allowed symbols:
+    spec symbols: '!', '@', '#', '$', '%', '^', '&', '*', '-', '_',
+    digits,
+    english letters (upper case and lower case)
+
+Password:
+  8 <= length <= 40
+  allowed symbols - same as for Username
+  additional constraints: 1 lower case, 1 uppercase, 1 digit, 1 specsymbol
+```
 Headers:
 ```
 Content-Type: application/json
@@ -119,6 +133,12 @@ In case when username already used:
 ```
 {
   "errors": "User with such username already exists"
+}
+```
+In case when username breaks constraints (for password - the same):
+```
+{
+  "errors": "username regex error"
 }
 ```
 ### 7. POST /login

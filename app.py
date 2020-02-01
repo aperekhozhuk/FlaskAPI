@@ -4,6 +4,7 @@ from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 import os
 import jwt
+import re
 
 
 ####### App Settings
@@ -19,6 +20,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 # Init ma
 ma = Marshmallow(app)
+# Username and Password regexes for validation
+PASSWORD_REGEX = re.compile(
+    "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*-_]).{8,40}$"
+)
+USERNAME_REGEX = re.compile(
+    "^[A-Za-z\d!@#$%^&*-_]{5,20}$"
+)
 
 
 #### Models and Schemas
@@ -29,6 +37,10 @@ class User(db.Model):
     password = db.Column(db.String(40))
 
     def __init__(self, username, password):
+        if USERNAME_REGEX.match(username) == None:
+            raise NameError
+        if PASSWORD_REGEX.match(password) == None:
+            raise ValueError
         self.username = username
         self.password = password
 
@@ -83,7 +95,12 @@ def register():
         return jsonify({'errors': 'username is missing'})
     if not password:
         return jsonify({'errors': 'password is missing'})
-    new_user = User(username, password)
+    try:
+        new_user = User(username, password)
+    except NameError:
+        return jsonify({'errors': 'username regex error'}), 400
+    except ValueError:
+        return jsonify({'errors': 'password regex error'}), 400
     try:
         db.session.add(new_user)
         db.session.commit()
