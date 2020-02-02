@@ -1,7 +1,7 @@
 from flask import request, jsonify
 import jwt
 from models import db, User, Article, user_schema, articles_schema, article_schema
-from main import app
+from main import app, POSTS_PER_PAGE
 
 
 # authorization decorator
@@ -86,9 +86,10 @@ def add_article(user):
 # Get All Articles
 @app.route('/articles', methods=['GET'])
 def get_articles():
-    # Not good idea to load all articles. In future need to make pagination
-    all_articles = Article.query.all()
-    result = articles_schema.dump(all_articles)
+    page = request.args.get('page', 1, type=int)
+    last_articles = Article.query.order_by(Article.date_posted.desc()).\
+        paginate(page=page, per_page=POSTS_PER_PAGE, error_out=False)
+    result = articles_schema.dump(last_articles.items)
     return jsonify(result)
 
 # Get Single Article
@@ -132,9 +133,23 @@ def delete_article(user, id):
     db.session.commit()
     return article_schema.jsonify(article)
 
+# Provide public user data
+# In future here will be avatar, date of birth, etc
 @app.route('/users/<id>', methods=['GET'])
 def user_data(id):
     user = User.query.get(id)
     if not user:
         return jsonify({'errors': 'User with id={} not found'.format(id)})
     return user_schema.jsonify(user)
+
+# Paginated collection of specified user's articles
+@app.route('/users/<id>/articles', methods=['GET'])
+def user_articles(id):
+    page = request.args.get('page', 1, type=int)
+    user = User.query.get(id)
+    if not user:
+        return jsonify({'errors': 'User with id={} not found'.format(id)})
+    user_articles = user.articles.order_by(Article.date_posted.desc())\
+        .paginate(page=page, per_page=POSTS_PER_PAGE, error_out=False)
+    result = articles_schema.dump(user_articles.items)
+    return articles_schema.jsonify(result)

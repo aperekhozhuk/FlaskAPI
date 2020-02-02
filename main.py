@@ -18,3 +18,5 @@ PASSWORD_REGEX = re.compile(
 USERNAME_REGEX = re.compile(
     "^[A-Za-z\d!@#$%^&*-_]{5,20}$"
 )
+# Paginated collection size
+POSTS_PER_PAGE = 10

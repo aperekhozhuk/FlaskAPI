@@ -31,7 +31,7 @@ class Article(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.Text)
     text = db.Column(db.Text)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
