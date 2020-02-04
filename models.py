@@ -3,20 +3,26 @@ from flask_marshmallow import Marshmallow
 from main import app, PASSWORD_REGEX, USERNAME_REGEX
 from datetime import datetime
 
-# Init db
+# Database initialization
 db = SQLAlchemy(app)
-# Init ma
 ma = Marshmallow(app)
 
 
 # User model
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True)
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(20), unique = True)
     password = db.Column(db.String(40))
-    date_registered = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    articles = db.relationship('Article', backref='author', lazy='dynamic')
+    date_registered = db.Column(
+        db.DateTime,
+        nullable = False,
+        default = datetime.utcnow
+    )
+    articles = db.relationship(
+        'Article',
+        backref = 'author',
+        lazy = 'dynamic'
+    )
 
     def __init__(self, username, password):
         if USERNAME_REGEX.match(username) == None:
@@ -28,11 +34,15 @@ class User(db.Model):
 
 # Article Model
 class Article(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.Text)
     text = db.Column(db.Text)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
-
+    date_posted = db.Column(
+        db.DateTime,
+        nullable = False,
+        default = datetime.utcnow,
+        index = True
+    )
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __init__(self, user_id, title, text):
