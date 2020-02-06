@@ -12,7 +12,7 @@ Ability:
 1. Clone && cd into repository folder
 2. Create virtual environment called 'env' (bsc actually this name I'm using in .gitignore)
 3. Run 'pip install -r requirements.txt'
-4. Run 'db_setup.py' - creating DB
+4. Run 'flask db upgrade' - creating DB
 5. Run 'python app.py'
 6. It's avaliable on localhost:5000
 
