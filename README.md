@@ -225,7 +225,7 @@ or if user with such id doesn't exist
   "error": "User with id={id} was not found"
 }, status = 404
 ```
-### 9. GET '/users/<id>/articles?page={n}' - get user's last articles
+### 9. GET '/users/{id}/articles?page={n}' - get user's last articles
 Headers:
 ```
 Content-Type: application/json

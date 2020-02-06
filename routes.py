@@ -2,7 +2,7 @@ from flask import request, jsonify
 import jwt
 from models import db, User, Article, user_schema, \
     articles_schema, article_schema
-from main import app, POSTS_PER_PAGE
+from main import app
 
 
 # Helper functions:
@@ -151,7 +151,11 @@ def get_articles():
     page = request.args.get('page', 1, type = int)
 
     last_articles = Article.query.order_by(Article.date_posted.desc()). \
-        paginate(page = page, per_page = POSTS_PER_PAGE, error_out = False)
+        paginate(
+            page = page,
+            per_page = app.config['POSTS_PER_PAGE'],
+            error_out = False
+        )
 
     result = articles_schema.dump(last_articles.items)
     return jsonify(result), 200
@@ -233,8 +237,12 @@ def user_articles(id):
     if not user:
         return resource_not_found_message('User', id), 404
 
-    user_articles = user.articles.order_by(Article.date_posted.desc()) \
-        .paginate(page = page, per_page = POSTS_PER_PAGE, error_out = False)
+    user_articles = user.articles.order_by(Article.date_posted.desc()). \
+        paginate(
+            page = page,
+            per_page = app.config['POSTS_PER_PAGE'],
+            error_out = False
+        )
 
     result = articles_schema.dump(user_articles.items)
     return articles_schema.jsonify(result), 200

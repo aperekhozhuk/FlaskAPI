@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from main import app, PASSWORD_REGEX, USERNAME_REGEX
+from main import app
 from datetime import datetime
 
 # Database initialization
@@ -25,9 +25,9 @@ class User(db.Model):
     )
 
     def __init__(self, username, password):
-        if USERNAME_REGEX.match(username) == None:
+        if app.config['USERNAME_REGEX'].match(username) == None:
             raise NameError
-        if PASSWORD_REGEX.match(password) == None:
+        if app.config['PASSWORD_REGEX'].match(password) == None:
             raise ValueError
         self.username = username
         self.password = password
