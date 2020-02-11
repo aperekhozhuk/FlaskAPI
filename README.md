@@ -13,7 +13,7 @@ Ability:
 2. Create virtual environment called 'env' (bsc actually this name I'm using in .gitignore)
 3. Run 'pip install -r requirements.txt'
 4. Run 'flask db upgrade' - creating DB
-5. Run 'python app.py'
+5. Run 'flask run'
 6. It's avaliable on localhost:5000
 
 # Api endpoints:

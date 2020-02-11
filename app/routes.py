@@ -1,8 +1,8 @@
 from flask import request, jsonify
 import jwt
-from models import db, User, Article, user_schema, \
+from app.models import db, User, Article, user_schema, \
     articles_schema, article_schema
-from main import app
+from app import app
 
 
 # Helper functions:

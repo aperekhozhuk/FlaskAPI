@@ -1,14 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from flask_migrate import Migrate
-from main import app
+from app import app, db
 from datetime import datetime
 
-# Database initialization
-db = SQLAlchemy(app)
-ma = Marshmallow(app)
-migrate = Migrate(app, db)
 
+ma = Marshmallow(app)
 
 # User model
 class User(db.Model):
