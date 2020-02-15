@@ -54,13 +54,13 @@ class UserSchema(ma.Schema):
 
 # Article Schema
 class ArticleSchema(ma.Schema):
-  class Meta:
-    fields = ('id', 'title', 'text', 'user_id', 'date_posted')
+    class Meta:
+        fields = ('id', 'title', 'text', 'user_id', 'date_posted', 'author.username')
 
 # Articles Schema
 class ArticlesSchema(ma.Schema):
-  class Meta:
-    fields = ('id', 'title', 'user_id', 'date_posted')
+    class Meta:
+        fields = ('id', 'title', 'user_id', 'date_posted', 'author.username')
 
 # Schema's initializing
 article_schema = ArticleSchema()

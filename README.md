@@ -5,8 +5,9 @@ Ability:
 1. User registration - only username and password fields, no email confirmation
 2. Simple Authentication based on JWT
 3. Getting last (by date_posted) articles (or also of specified user) by pages, or just single specified article
-4. Creating, Updating or Deleting article own articles - only for registered users
+4. Creating, Updating or Deleting own articles - only for registered users
 5. Geting user's public data (profile) by id. Now it's just username and date of registration
+6. Verifying client's access-token
 
 # Running locally
 1. Clone && cd into repository folder
@@ -14,7 +15,7 @@ Ability:
 3. Run 'pip install -r requirements.txt'
 4. Run 'flask db upgrade' - creating DB
 5. Run 'flask run'
-6. It's available on localhost:5000
+6. It's available on localhost:5000 (by default)
 
 # Testing
 You need to run your app (in other window or in background) and then run testing script. Testing is going on with temporarry DB. Your main DB (which stores in 'db.sqlite') stays unchanged
@@ -22,6 +23,21 @@ You need to run your app (in other window or in background) and then run testing
 2. Run 'python tests.py -v'
 
 # Api endpoints:
+
+Routes 3), 4), 5), 10) demand from client 'access-token' field, passed in body of request.
+You can get valid token if login with correct username and password.
+In case of invalid access-token you will get:
+```
+{
+  "error": "Invalid access-token. Log in please"
+}, status = 401
+```
+In case of token missing:
+```
+{
+  "error": "Access-token is missing. Log in, please"
+}, status = 401
+```
 
 ### 1. GET '/articles?page=2'  -  return list of last posted date (page 2)
 Response:
@@ -31,13 +47,15 @@ Response:
       "id": 1,
       "date_posted": "2020-02-02T00:17:49.735642",
       "title": "Text 1",
-      "user_id": 1
+      "user_id": 1,
+      "author.username": "username_axample"
     },
     {
       "id": 2,
       "date_posted": "2020-02-02T00:17:49.735642",
       "title": "Text 2",
-      "user_id": 1
+      "user_id": 1,
+      "author.username": "username_axample"
     }
   ], status = 200
 ```
@@ -51,7 +69,8 @@ Response:
   "text": "Hello world, edited",
   "title": "1st articlem edited",
   "date_posted": "2020-02-02T00:17:49.735642",
-  "user_id": 1
+  "user_id": 1,
+  "author.username": "username_axample"
 }, status = 200
 ```
 or if article was not found:
@@ -83,17 +102,6 @@ Response:
   "user_id": 1
 }, status = 200
 ```
-You can get valid token if login with correct username and password.
-In case of invalid access-token you will get:
-```
-{
-  "error": "Invalid access-token. Log in please"
-}, status = 401
-```
-In case of token missing:
-{
-  "error": "Access-token is missing. Log in, please"
-}, status = 400
 In case of title missing:  (for text missing - same)
 ```
 {
@@ -125,8 +133,7 @@ Body:
   "access-token": "json.token.example"
 }
 ```
-If article was not found or If you'll try to delete not own post - same as 4)
-If specified post was not found - same as 2)
+If article was not found or If you'll try to delete not own post - same as 4).
 ### 6. POST '/register'  - register new user
 #### Constraints:
 ```
@@ -212,10 +219,7 @@ Or - when username is missing (for password - the same)
 }, status = 400
 ```
 ### 8. GET '/users/{id}' - get user profile
-Headers:
-```
-Content-Type: application/json
-```
+
 Response:
 ```
 {
@@ -231,31 +235,40 @@ or if user with such id doesn't exist
 }, status = 404
 ```
 ### 9. GET '/users/{id}/articles?page={n}' - get user's last articles
-Headers:
-```
-Content-Type: application/json
-```
-Response: n-th page of user's articles, newest by date_registered
+
+Response: n-th page of user's articles, newest by date_posted
 ```
 [
   {
     "date_posted": "2020-02-04T03:48:45.259224",
     "id": 25,
     "title": "2nd article",
-    "user_id": 1
+    "user_id": 1,
+    "author.username": "username_axample"
   },
   {
     "date_posted": "2020-02-04T03:46:04.264139",
     "id": 24,
     "title": "2nd article",
-    "user_id": 1
+    "user_id": 1,
+    "author.username": "username_axample"
   },
   {
     "date_posted": "2020-02-04T03:44:40.030282",
     "id": 23,
     "title": "2nd article",
-    "user_id": 1
+    "user_id": 1,
+    "author.username": "username_axample"
   }, ...
 ], status = 200
 ```
 or if user with such id doesn't exist - see 8)
+
+### 10. POST '/verify-token' - verify client's access-token
+Response:
+```
+{
+  "username" : "some_user_name",
+  "id" : 1
+}, status = 200
+```

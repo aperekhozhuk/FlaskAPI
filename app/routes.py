@@ -61,6 +61,12 @@ def field_is_missing_message(field_type):
 
 # Routes:
 
+# Verify-token. Need for checking from fronend app.
+@app.route('/verify-token', methods=['POST'])
+@login_required
+def verify_token(user):
+    return jsonify({'username' : user.username, 'id' : user.id}), 200
+
 # User registration
 @app.route('/register', methods=['POST'])
 def register():
