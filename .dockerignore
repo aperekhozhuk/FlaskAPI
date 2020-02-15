@@ -1,0 +1,8 @@
+/.pytest_cache
+/.vscode
+/env
+.gitignore
+db.sqlite
+README.md
+tests.py
+Dockerfile

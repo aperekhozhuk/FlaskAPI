@@ -10,11 +10,16 @@ Ability:
 
 # Running locally
 1. Clone && cd into repository folder
-2. Create virtual environment called 'env' (bsc actually this name I'm using in .gitignore)
+2. Create virtual environment called 'env' (because actually this name I'm using in .gitignore)
 3. Run 'pip install -r requirements.txt'
 4. Run 'flask db upgrade' - creating DB
 5. Run 'flask run'
-6. It's avaliable on localhost:5000
+6. It's available on localhost:5000
+
+# Testing
+You need to run your app (in other window or in background) and then run testing script. Testing is going on with temporarry DB. Your main DB (which stores in 'db.sqlite') stays unchanged
+1. Run 'flask run'
+2. Run 'python tests.py -v'
 
 # Api endpoints:
 
@@ -74,7 +79,7 @@ Response:
   "date_posted": "2020-02-04T03:46:04.264139",
   "id": 24,
   "text": "Hello world, firstly",
-  "title": "2st article",
+  "title": "2nd article",
   "user_id": 1
 }, status = 200
 ```
@@ -236,19 +241,19 @@ Response: n-th page of user's articles, newest by date_registered
   {
     "date_posted": "2020-02-04T03:48:45.259224",
     "id": 25,
-    "title": "2st article",
+    "title": "2nd article",
     "user_id": 1
   },
   {
     "date_posted": "2020-02-04T03:46:04.264139",
     "id": 24,
-    "title": "2st article",
+    "title": "2nd article",
     "user_id": 1
   },
   {
     "date_posted": "2020-02-04T03:44:40.030282",
     "id": 23,
-    "title": "2st article",
+    "title": "2nd article",
     "user_id": 1
   }, ...
 ], status = 200
