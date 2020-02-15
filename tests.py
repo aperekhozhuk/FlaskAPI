@@ -118,7 +118,7 @@ class Api:
         articles = []
         while True:
             url = self.root_url.format(endpoint.format(page))
-            current_page = requests.get(url = url).json()
+            current_page = requests.get(url = url).json()['articles']
             if current_page:
                 articles += current_page
                 page += 1
@@ -138,17 +138,30 @@ class Api:
 
     def compare_article(self, stored_article, retrieved_article, unit_test):
         unit_test.assertEqual(stored_article.id, retrieved_article['id'])
-        unit_test.assertEqual(stored_article.user_id, retrieved_article['user_id'])
-        unit_test.assertEqual(stored_article.title, retrieved_article['title'])
+        unit_test.assertEqual(
+            stored_article.user_id,
+            retrieved_article['user_id']
+        )
+        unit_test.assertEqual(
+            stored_article.title,
+            retrieved_article['title']
+        )
 
 class TestApi(unittest.TestCase):
 
+    # We need this variable permanently. So we create their as class variable
+    # Unittest.TestCase creates new instance for each test,
+    # but our tests depends between each other
     first_user = User(username = 'user#1', password = 'Password#1')
-    second_user = User(username = 'user#2', password = 'Password#1')
+    second_user = User(username = 'user#2', password = 'Password#2')
+    Api = Api()
 
     def __init__(self, *args, **kwargs):
         super(TestApi, self).__init__(*args, **kwargs)
-        self.Api = Api()
+        # Here we just store links for respective class variables
+        self.Api = self.__class__.Api
+        self.first_user = self.__class__.first_user
+        self.second_user = self.__class__.second_user
 
         self.user_with_short_name = User(
             username = 'name',
@@ -158,7 +171,7 @@ class TestApi(unittest.TestCase):
             username = 'JohnDoe',
             password = 'weak_password'
         )
-        self.user_that_repeats = self.__class__.first_user
+        self.user_that_repeats = self.first_user
         self.user_unregistered = User(
             username = 'UserThatDidntSignUp',
             password = 'Unregistered#1'
@@ -170,14 +183,14 @@ class TestApi(unittest.TestCase):
     # During this test we also register our two users in API
     # Warning! Exectuting of this test makes changes to our local state
     def test_a1_user_can_signup(self):
-        status, error = self.Api.register(self.__class__.first_user)
+        status, error = self.Api.register(self.first_user)
         self.assertEqual(status, 200)
-        status, erorr = self.Api.register(self.__class__.second_user)
+        status, erorr = self.Api.register(self.second_user)
         self.assertEqual(status, 200)
 
 
     def test_a2_user_cant_signup_with_used_username(self):
-        status, error = self.Api.register(self.__class__.first_user)
+        status, error = self.Api.register(self.first_user)
         self.assertEqual(status, 409)
         self.assertEqual(error, 'User with such name already exists')
 
@@ -192,9 +205,9 @@ class TestApi(unittest.TestCase):
     # After executing this test - our users get valid access-tokens.
     # We will use their in next tests
     def test_a4_user_can_login(self):
-        status, error = self.Api.login(self.__class__.first_user)
+        status, error = self.Api.login(self.first_user)
         self.assertEqual(status, 200)
-        status, error = self.Api.login(self.__class__.second_user)
+        status, error = self.Api.login(self.second_user)
         self.assertEqual(status, 200)
 
     def test_a5_unregistered_user_cant_login(self):
@@ -205,37 +218,44 @@ class TestApi(unittest.TestCase):
     # During this test we are creating one article of our first_user
     def test_a6_user_can_create_article(self):
         article = Article(title = 'Title', text = 'Text')
-        user = self.__class__.first_user
+        user = self.first_user
         status, error = self.Api.create_new_article(user, article)
         self.assertEqual(status, 200)
         self.assertEqual(article.user_id, user.id)
         # Check, that we really can retrieve this article from api
         response = self.Api.get_article(article.id)
         self.assertEqual(response.json()['id'], article.id)
+        self.assertEqual(response.json()['title'], article.title)
 
     # Here we edit previously created article of first_user
     def test_a7_user_can_edit_own_article(self):
-        user = self.__class__.first_user
-        article = self.__class__.first_user.articles[0]
+        user = self.first_user
+        article = user.articles[0]
         response = self.Api.edit_article(user, article)
-        data = response.json()
+        # Check, that editing was successful
         self.assertEqual(response.status_code, 200)
+        # Left to get edited article, and check if it really edited
+        response = self.Api.get_article(id = article.id)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        # Check, that id and user_id still without changes
         self.assertEqual(data['user_id'], user.id)
         self.assertEqual(data['id'], article.id)
+        # But title and text changed
         self.assertEqual(data['title'], article.title + 'edited')
         self.assertEqual(data['text'], article.text + 'edited')
 
     def test_a8_user_cant_edit_not_own_article(self):
-        user = self.__class__.second_user
-        article = self.__class__.first_user.articles[0]
+        user = self.second_user
+        article = self.first_user.articles[0]
         response = self.Api.edit_article(user, article)
         data = response.json()
         self.assertEqual(response.status_code, 403)
         self.assertEqual(data['error'], 'You can edit only own article')
 
     def test_a9_user_cant_delete_not_own_article(self):
-        user = self.__class__.second_user
-        article = self.__class__.first_user.articles[0]
+        user = self.second_user
+        article = self.first_user.articles[0]
         response = self.Api.delete_article(user, article)
         data = response.json()
         self.assertEqual(response.status_code, 403)
@@ -243,24 +263,32 @@ class TestApi(unittest.TestCase):
 
     def test_b1_user_without_token_cant_edit(self):
         user = self.user_unregistered
-        article = self.__class__.first_user.articles[0]
+        article = self.first_user.articles[0]
         response = self.Api.edit_article(user, article)
         data = response.json()
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(data['error'], 'Access-token is missing. Log in, please')
+        self.assertEqual(
+            data['error'],
+            'Access-token is missing. Log in, please'
+        )
 
     def test_b2_user_without_token_cant_delete(self):
         user = self.user_unregistered
-        article = self.__class__.first_user.articles[0]
+        article = self.first_user.articles[0]
         response = self.Api.delete_article(user, article)
         data = response.json()
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(data['error'], 'Access-token is missing. Log in, please')
+        self.assertEqual(
+            data['error'],
+            'Access-token is missing. Log in, please'
+        )
 
-    def test_b3_user_with_ivalid__token_cant_edit(self):
+    def test_b3_user_with_invalid__token_cant_edit(self):
         user = self.user_unregistered
-        user.access_token = self.__class__.first_user.access_token[1:]
-        article = self.__class__.first_user.articles[0]
+        # Lets give to user_unregistered trimmed token of first_user
+        # It exactly will be invalid
+        user.access_token = self.first_user.access_token[1:]
+        article = self.first_user.articles[0]
         response = self.Api.edit_article(user, article)
         data = response.json()
         self.assertEqual(response.status_code, 401)
@@ -268,8 +296,8 @@ class TestApi(unittest.TestCase):
 
     def test_b4_user_with_invalid_token_cant_delete(self):
         user = self.user_unregistered
-        user.access_token = self.__class__.first_user.access_token[1:]
-        article = self.__class__.first_user.articles[0]
+        user.access_token = self.first_user.access_token[1:]
+        article = self.first_user.articles[0]
         response = self.Api.delete_article(user, article)
         data = response.json()
         self.assertEqual(response.status_code, 401)
@@ -278,35 +306,52 @@ class TestApi(unittest.TestCase):
     # And finally we delete first_user's article from API
     # And we delete it from our local state (better for future tests)
     def test_b5_user_can_delete_own_article(self):
-        user = self.__class__.first_user
-        article = self.__class__.first_user.articles[0]
+        user = self.first_user
+        article = self.first_user.articles[0]
         response = self.Api.delete_article(user, article)
         data = response.json()
+        # Since we deleted article, and user had only it
         user.articles = []
         self.assertEqual(response.status_code, 200)
+        # Left to check, that now we really can't get deleted article from API
+        deleted_article_id = data['id']
+        response = self.Api.get_article(id = deleted_article_id)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.json()['error'],
+            'Article with id={} was not found'.format(deleted_article_id)
+        )
 
-    def test_b5_user_with_invalid_token_cant_create(self):
+    def test_b6_user_without_token_cant_create(self):
         article = Article(title = 'Title', text = 'Text')
         user = self.user_unregistered
         status, error = self.Api.create_new_article(user, article)
         self.assertEqual(status, 401)
         self.assertEqual(error, 'Access-token is missing. Log in, please')
 
+    def test_b7_user_with_invalid_token_cant_create(self):
+        article = Article(title = 'Title', text = 'Text')
+        user = self.user_unregistered
+        user.access_token = self.first_user.access_token[1:]
+        status, error = self.Api.create_new_article(user, article)
+        self.assertEqual(status, 401)
+        self.assertEqual(error, 'Invalid access-token. Log in please')
+
     # Please, note, that during previous tests:
     # first_user created one article, then edited it, and, finally,
     # deleted it. So for now we shouldn't see any articles
-    def test_b6_no_articles_present(self):
+    def test_b8_no_articles_present(self):
         response = self.Api.get_last_articles()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.json()['articles'], [])
 
     # During our tests we registered two users (and only two),
     # so we can get their profiles by their ID's.
     # Also we can't get profile by ID that is missing.
     # For example, we can take thaa ID as sum of ID's of two existing users
-    def test_b7_get_user_profile(self):
-        first_user = self.__class__.first_user
-        second_user = self.__class__.second_user
+    def test_b9_get_user_profile(self):
+        first_user = self.first_user
+        second_user = self.second_user
         missed_user_id = first_user.id + second_user.id
         response1 = self.Api.get_user_profile(first_user.id)
         response2 = self.Api.get_user_profile(second_user.id)
@@ -323,10 +368,10 @@ class TestApi(unittest.TestCase):
     # In that test we create bunch of articles (15 for each of our two users)
     # And after that checking that we really can retrieve all
     # of this articles from API
-    def test_b8_test_create_many_articles(self):
+    def test_c1_test_create_many_articles(self):
         article_count = 15
-        first_user = self.__class__.first_user
-        second_user = self.__class__.second_user
+        first_user = self.first_user
+        second_user = self.second_user
         for i in range(1, article_count + 1):
             title1 = 'Title {} | {}'.format(i, 1)
             text1 = 'Text {} | {}'.format(i, 1)
@@ -356,8 +401,13 @@ class TestApi(unittest.TestCase):
             len(first_user_articles), len(first_user_articles_local)
         )
         for i in range(article_count):
+            # For first user:
             retrieved_article = first_user_articles[i]
             stored_article = first_user.articles[article_count - 1 - i]
+            self.Api.compare_article(stored_article, retrieved_article, self)
+            # And for second:
+            retrieved_article = second_user_articles[i]
+            stored_article = second_user.articles[article_count - 1 - i]
             self.Api.compare_article(stored_article, retrieved_article, self)
         all_articles = self.Api.get_all_articles()
         # Check, if total count of articles matches with
