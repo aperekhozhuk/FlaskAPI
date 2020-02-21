@@ -39,25 +39,32 @@ In case of token missing:
 }, status = 401
 ```
 
-### 1. GET '/articles?page=2'  -  return list of last posted date (page 2)
+### 1. GET '/articles?page={n}' - get last articles
+Returns last articles. If 'page' parameter passed - return specific page.
+Max count of articles per page specified in project settings.
+Also returns bool value, which tell if next page exists. <br>
 Response:
 ```
-  [
-    {
-      "id": 1,
-      "date_posted": "2020-02-02T00:17:49.735642",
-      "title": "Text 1",
-      "user_id": 1,
-      "author.username": "username_axample"
-    },
-    {
-      "id": 2,
-      "date_posted": "2020-02-02T00:17:49.735642",
-      "title": "Text 2",
-      "user_id": 1,
-      "author.username": "username_axample"
-    }
-  ], status = 200
+{
+  "articles":
+    [
+      {
+        "id": 1,
+        "date_posted": "2020-02-02T00:17:49.735642",
+        "title": "Text 1",
+        "user_id": 1,
+        "author.username": "username_axample"
+      },
+      {
+        "id": 2,
+        "date_posted": "2020-02-02T00:17:49.735642",
+        "title": "Text 2",
+        "user_id": 1,
+        "author.username": "username_axample"
+      }
+    ],
+  "next" : false
+}, status = 200
 ```
 or empty list if no articles, also status = 200
 
@@ -234,37 +241,47 @@ or if user with such id doesn't exist
   "error": "User with id={id} was not found"
 }, status = 404
 ```
-### 9. GET '/users/{id}/articles?page={n}' - get user's last articles
-
-Response: n-th page of user's articles, newest by date_posted
+### 9. GET '/users/{id}/articles?page={n}' - get last user's articles
+Same as 1), but returns articles of specified user. <br>
+Response:
 ```
-[
-  {
-    "date_posted": "2020-02-04T03:48:45.259224",
-    "id": 25,
-    "title": "2nd article",
-    "user_id": 1,
-    "author.username": "username_axample"
-  },
-  {
-    "date_posted": "2020-02-04T03:46:04.264139",
-    "id": 24,
-    "title": "2nd article",
-    "user_id": 1,
-    "author.username": "username_axample"
-  },
-  {
-    "date_posted": "2020-02-04T03:44:40.030282",
-    "id": 23,
-    "title": "2nd article",
-    "user_id": 1,
-    "author.username": "username_axample"
-  }, ...
-], status = 200
+{
+  "articles":
+    [
+      {
+        "date_posted": "2020-02-04T03:48:45.259224",
+        "id": 25,
+        "title": "2nd article",
+        "user_id": 1,
+        "author.username": "username_axample"
+      },
+      {
+        "date_posted": "2020-02-04T03:46:04.264139",
+        "id": 24,
+        "title": "2nd article",
+        "user_id": 1,
+        "author.username": "username_axample"
+      },
+      {
+        "date_posted": "2020-02-04T03:44:40.030282",
+        "id": 23,
+        "title": "2nd article",
+        "user_id": 1,
+        "author.username": "username_axample"
+      }
+    ],
+  "next": true
+}, status = 200
 ```
 or if user with such id doesn't exist - see 8)
 
 ### 10. POST '/verify-token' - verify client's access-token
+Body:
+```
+{
+  "access-token" : "access.token.example"
+}
+```
 Response:
 ```
 {

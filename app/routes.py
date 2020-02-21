@@ -163,8 +163,12 @@ def get_articles():
             error_out = False
         )
 
-    result = articles_schema.dump(last_articles.items)
-    return jsonify(result), 200
+    res = {
+        'articles' : articles_schema.dump(last_articles.items),
+        'next': last_articles.has_next
+    }
+
+    return jsonify(res), 200
 
 # Get single article
 @app.route('/articles/<id>', methods=['GET'])
@@ -250,5 +254,9 @@ def user_articles(id):
             error_out = False
         )
 
-    result = articles_schema.dump(user_articles.items)
-    return articles_schema.jsonify(result), 200
+    res = {
+        'articles' : articles_schema.dump(user_articles.items),
+        'next': user_articles.has_next
+    }
+
+    return jsonify(res), 200
