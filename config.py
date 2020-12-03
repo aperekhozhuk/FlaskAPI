@@ -5,7 +5,7 @@ import re
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
-    SECRET_KEY = 'A16RoTodXyMxiGgbvkuk'
+    SECRET_KEY = 'A16RoTodXyMxiGgbvkuk'   # It's joke.Of course I replaced it on production server before deployment))
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db.sqlite')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Page size (need for paginations)
