@@ -12,8 +12,9 @@ class Config(object):
     POSTS_PER_PAGE = 10
     # Username and Password regexes for validation
     PASSWORD_REGEX = re.compile(
-        "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*-_]).{8,40}$"
+        "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*\\-_])" +\
+            "[A-Za-z0-9!@#$%^&*\\-_]{8,40}$"
     )
     USERNAME_REGEX = re.compile(
-        "^[A-Za-z\d!@#$%^&*-_]{5,20}$"
+        "^[A-Za-z0-9!@#$%^&*\\-_]{5,20}$"
     )
